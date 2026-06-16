@@ -1,0 +1,1286 @@
+{
+  "name": "?? Knowledge Base Self-Builder",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            },
+            {}
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1ulnlKHTbocyYvzcxP2ykORnu-1Btr6xl",
+          "mode": "list",
+          "cachedResultName": "Knowledge Base Incoming",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1ulnlKHTbocyYvzcxP2ykORnu-1Btr6xl"
+        },
+        "event": "={{ \"fileCreated\" }}",
+        "options": {
+          "fileType": "all"
+        }
+      },
+      "id": "9cf9d70a-6c30-4f05-b4c2-947880434c46",
+      "name": "New Doc Detected",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        48,
+        -208
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {}
+      },
+      "id": "6f94929a-fbd1-42c1-9115-0e1bb366d2a8",
+      "name": "Download File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        272,
+        -208
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "168196a9-d9d0-4ed4-a749-ec88dc9e60ad",
+      "name": "Extract Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the CATEGORIZER AGENT in a self-building knowledge base. Read the document and classify it precisely and consistently so similar documents always get the same category. Return JSON with: title, category (one broad area like Product, Sales, Engineering, Finance, HR, Legal, Operations, Marketing, Support), subcategory, tags (3-7 lowercase keywords), summary (2-3 sentences), key_topics (3-6 main topics)."
+        }
+      },
+      "id": "4319d366-c815-4205-bdec-76fa0c19c667",
+      "name": "Categorizer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        944,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "e361dc6f-dc2b-467f-9bf2-a19a2f57cb96",
+      "name": "GPT-4o Categorizer",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        16
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"title\": \"Q3 Sales Playbook\", \"category\": \"Sales\", \"subcategory\": \"Process\", \"tags\": [\"pricing\", \"outreach\"], \"summary\": \"A short summary.\", \"key_topics\": [\"pricing\", \"cold outreach\"] }"
+      },
+      "id": "9425e885-84d3-4938-9401-2ecafe56d237",
+      "name": "Category Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Extract Text').item.json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the RELATIONSHIP MAPPER AGENT. Turn the document into a connected knowledge graph. Extract entities (people, organisations, products, concepts, systems, places) each with a name and type, and relationships each as from, relation, to. Only include relationships the document supports. Return JSON."
+        }
+      },
+      "id": "69215194-80e9-4a4d-9ebe-7575e5eb38e5",
+      "name": "Relationship Mapper Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1296,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "e948c3f8-dedc-42b9-997d-db18336813a1",
+      "name": "GPT-4o Mapper",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1312,
+        16
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"entities\": [{ \"name\": \"Acme Corp\", \"type\": \"organization\" }], \"relationships\": [{ \"from\": \"Acme Corp\", \"relation\": \"supplies\", \"to\": \"Beta Ltd\" }] }"
+      },
+      "id": "bb56010f-914f-457d-a304-96520d90a121",
+      "name": "Graph Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "knowledge_index",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('Categorizer Agent').item.json.output?.title ?? $('Categorizer Agent').item.json.title }}"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "={{ $('Categorizer Agent').item.json.output?.category ?? $('Categorizer Agent').item.json.category }}"
+            },
+            {
+              "fieldId": "subcategory",
+              "fieldValue": "={{ $('Categorizer Agent').item.json.output?.subcategory ?? $('Categorizer Agent').item.json.subcategory }}"
+            },
+            {
+              "fieldId": "summary",
+              "fieldValue": "={{ $('Categorizer Agent').item.json.output?.summary ?? $('Categorizer Agent').item.json.summary }}"
+            },
+            {
+              "fieldId": "entities",
+              "fieldValue": "={{ JSON.stringify($('Relationship Mapper Agent').item.json.output?.entities ?? $('Relationship Mapper Agent').item.json.entities ?? []) }}"
+            },
+            {
+              "fieldId": "relationships",
+              "fieldValue": "={{ JSON.stringify($('Relationship Mapper Agent').item.json.output?.relationships ?? $('Relationship Mapper Agent').item.json.relationships ?? []) }}"
+            },
+            {
+              "fieldId": "source_file",
+              "fieldValue": "={{ $('New Doc Detected').item.json.name }}"
+            }
+          ]
+        }
+      },
+      "id": "be9894bd-8d29-453c-880a-caf6fff25808",
+      "name": "Save to Knowledge Index",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        -112
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "documents",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "6e981155-2cb1-4760-9ec6-87e65d7ffac7",
+      "name": "Embed into Vector Brain",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        3344,
+        -112
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "id": "a6ff2ba2-116b-4f8f-adad-d32bf9ce92d2",
+      "name": "OpenAI Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3360,
+        112
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "knowledge_index",
+        "limit": 20
+      },
+      "id": "255a3b14-acee-4146-ae67-facfa5c36d0e",
+      "name": "Fetch KB Index",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1872,
+        -112
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Categories already in the knowledge base: {{ $('Fetch KB Index').all().map(i => i.json.category).filter(Boolean).join(', ') || 'none yet' }}\nNewest document just added: \"{{ $('Categorizer Agent').item.json.output?.title ?? $('Categorizer Agent').item.json.title }}\" in category \"{{ $('Categorizer Agent').item.json.output?.category ?? $('Categorizer Agent').item.json.category }}\".",
+        "options": {
+          "systemMessage": "You are the GAP FINDER AGENT. Given the categories already in the knowledge base and the newest document, identify 3-6 specific COVERAGE GAPS: important topics or adjacent areas a complete knowledge base on these subjects should contain but seems to be missing. For each, give one short sentence on why it matters. Write a readable list, not JSON."
+        }
+      },
+      "id": "21e66e6b-f05a-4e98-b6e5-e1204bf992c7",
+      "name": "Gap Finder Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2096,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "6d0fe6ee-d933-4ca0-8894-c0fda4e5d50a",
+      "name": "GPT-4o Gap Finder",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2176,
+        416
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "report",
+              "name": "build_report",
+              "type": "string",
+              "value": "=Document ingested.\nTitle: {{ $('Categorizer Agent').item.json.output?.title ?? $('Categorizer Agent').item.json.title }}\nCategory: {{ $('Categorizer Agent').item.json.output?.category ?? $('Categorizer Agent').item.json.category }}\nEntities mapped: {{ ($('Relationship Mapper Agent').item.json.output?.entities ?? $('Relationship Mapper Agent').item.json.entities ?? []).length }}\nGaps found:\n{{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1019862b-7f33-47fb-b3e6-67f60599bd3e",
+      "name": "Build Report",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2448,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a405fd03-5831-4fc7-801e-912f1836a1dd",
+      "name": "Ask the Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        48,
+        944
+      ],
+      "webhookId": "4178498f-2441-43e1-8e28-d149428eb974"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are THE LIBRARIAN, the question-answering brain of a self-built knowledge base. You have two retrieval tools:\n\n1) search_knowledge_base - semantic search over the document passages. Use it to find facts, details, policies, numbers, and explanations.\n2) The knowledge-graph tool (Search Knowledge Graph) - looks up the EXACT relationships of a named entity (person, team, product, or concept): who reports to whom, who manages or owns what, which team handles a process, which tools are used. Use it for any relationship or org-structure question, and ALWAYS for multi-step relationship questions - look up one entity, then follow the chain by looking up the next. Search by the CORE entity name as it would appear in a document (e.g. 'billing disputes', 'Priya Sharma', 'Engineering Team') - do NOT invent role titles like 'Billing Disputes Handler'. If a lookup returns nothing, retry once with a simpler or related term, or fall back to search_knowledge_base, before concluding the information is missing.\n\nFor every question, call the appropriate tool(s) first and answer ONLY from what you retrieve. Cite the source document title(s) when you used passages. If the answer is genuinely not in the knowledge base, say so honestly and state what is missing - never invent facts. Prefer specifics over generalities."
+        }
+      },
+      "id": "d4736a6e-dedd-4ba6-825c-c1b9d32971de",
+      "name": "Librarian Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        416,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "id": "7a43b948-7d94-4dd7-9f9f-724894900381",
+      "name": "GPT-4o Librarian",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        272,
+        1168
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "search_knowledge_base",
+        "toolDescription": "Search the knowledge base for information relevant to the user question. Always use this before answering.",
+        "tableName": {
+          "__rl": true,
+          "value": "knowledge_index",
+          "mode": "list",
+          "cachedResultName": "knowledge_index"
+        },
+        "topK": 5,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "2c6238e1-322d-49b1-b902-7d5aa3987d6d",
+      "name": "Search Vector Brain",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        1168
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {
+          "encodingFormat": "float"
+        }
+      },
+      "id": "418520d9-a484-4db1-a0a8-f348a017f545",
+      "name": "OpenAI Embeddings Query",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        1376
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## THE BUILDER - self-organising ingestion\nNew file in Drive -> extract -> Categorizer + Relationship Mapper agents -> save to index -> embed into the Supabase vector brain -> Gap Finder reports what is missing.",
+        "height": 104,
+        "width": 616,
+        "color": 4
+      },
+      "id": "fc323f07-04eb-4fea-8de1-669ba64711cc",
+      "name": "Sticky Note 89598fe7",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## THE LIBRARIAN - ask anything\nChat -> the Librarian agent searches the vector brain (RAG) and answers with citations. Says \"I do not know\" instead of hallucinating.",
+        "height": 112,
+        "width": 560,
+        "color": 5
+      },
+      "id": "9b0562fc-32df-4d2e-b2e6-e35c598d577e",
+      "name": "Sticky Note a0233e89",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Extract Text').item.json.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "title",
+                "value": "={{ $('Categorizer Agent').item.json.output?.title ?? $('Categorizer Agent').item.json.title }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $('Categorizer Agent').item.json.output?.category ?? $('Categorizer Agent').item.json.category }}"
+              },
+              {
+                "name": "source_file",
+                "value": "={{ $('New Doc Detected').item.json.name }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        3488,
+        112
+      ],
+      "id": "a3b1ed21-c1fa-4919-91e2-059000f3df98",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $('Categorizer Agent').item.json.output?.title ?? $('Categorizer Agent').item.json.title }}"
+            },
+            {
+              "id": "f2",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $('Categorizer Agent').item.json.output?.category ?? $('Categorizer Agent').item.json.category }}"
+            },
+            {
+              "id": "f3",
+              "name": "subcategory",
+              "type": "string",
+              "value": "={{ $('Categorizer Agent').item.json.output?.subcategory ?? $('Categorizer Agent').item.json.subcategory }}"
+            },
+            {
+              "id": "f4",
+              "name": "summary",
+              "type": "string",
+              "value": "={{ $('Categorizer Agent').item.json.output?.summary ?? $('Categorizer Agent').item.json.summary }}"
+            },
+            {
+              "id": "f5",
+              "name": "source_file",
+              "type": "string",
+              "value": "={{ $('New Doc Detected').item.json.name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f491c3cf-64a2-4362-9ef5-753779151ed3",
+      "name": "Prepare Index Row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1648,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Look up the EXACT relationships of one named entity (a person, team, product, or concept) directly from the knowledge graph. Returns what it connects to and how - e.g. reports to, led by, managed by, owns, uses, escalated to, routed to. Use this for any question about org structure, reporting lines, who manages or handles something, ownership, or which tools a team uses - and especially for multi-step relationship questions, looking up one entity at a time and following the chain.",
+        "method": "POST",
+        "url": "https://YOUR_PROJECT.supabase.co/rest/v1/rpc/search_graph",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "entity",
+              "value": "={{ $fromAI('entity', 'The exact name of one entity (person, team, product, or concept) to look up relationships for, for example Priya Sharma or Engineering Team', 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8dbd3b7e-d69e-480e-8839-bf6c877585a8",
+      "name": "Search Knowledge Graph",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        688,
+        1168
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nlet contradictionData = { has_contradictions: false, contradictions: [], safe_to_add: true };\n\ntry {\n  const text = input.choices[0].message.content || '';\n  const cleaned = text.replace(/```json\\n?|\\n?```/g, '').trim();\n  contradictionData = JSON.parse(cleaned);\n} catch(e) {}\n\nreturn [{\n  json: {\n    ...input,\n    contradictionCheck: contradictionData,\n    hasContradictions: contradictionData.has_contradictions || false,\n    safeToAdd: contradictionData.safe_to_add !== false\n  }\n}];"
+      },
+      "id": "parser-node-id-unique",
+      "name": "Parse Contradiction Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "name": "Daily Decay Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        48,
+        512
+      ],
+      "id": "8f04ae2a-b8a8-46dc-b356-cc0767e9ecb6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $('Fetch KB Index (Decay)').all();\nconst now = new Date();\nconst thirtyDays = 30 * 24 * 60 * 60 * 1000;\nconst sixtyDays = 60 * 24 * 60 * 60 * 1000;\nconst ninetyDays = 90 * 24 * 60 * 60 * 1000;\n\nconst staleItems = items.map(item => {\n  const addedAt = new Date(item.json.added_at || now);\n  const age = now - addedAt;\n  const ageDays = Math.floor(age / (24 * 60 * 60 * 1000));\n  \n  let urgency = null;\n  if (age > ninetyDays) urgency = 'critical';\n  else if (age > sixtyDays) urgency = 'high';\n  else if (age > thirtyDays) urgency = 'medium';\n  \n  return urgency ? {\n    title: item.json.title,\n    category: item.json.category,\n    ageDays,\n    urgency,\n    addedAt: item.json.added_at\n  } : null;\n}).filter(Boolean);\n\nconst msg = staleItems.length > 0 \n  ? `?? *Knowledge Decay Alert*\\n\\n${staleItems.map(i => `?? *${i.title}*\\n   Category: ${i.category}\\n   Age: ${i.ageDays} days\\n   Urgency: ${i.urgency.toUpperCase()}`).join('\\n\\n')}\\n\\n?? Please review and update these documents.`\n  : `? *Knowledge Base Health Check*\\nAll documents are up to date!`;\n\nreturn [{ json: { staleCount: staleItems.length, staleItems, telegramMsg: msg } }];"
+      },
+      "name": "Check Knowledge Age",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        512
+      ],
+      "id": "abacdf5b-52f9-4113-abf8-08a8823d4632"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "={{ $json.telegramMsg }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Send Decay Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        512
+      ],
+      "id": "f1328a6d-0202-4ae4-86f9-93c0103e4d51",
+      "webhookId": "d47fe92f-3221-481f-9951-8f6b21426fcf",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Telegram account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst contradiction = data.contradictionCheck || {};\nconst entities = data.output?.entities || data.entities || [];\nconst relationships = data.output?.relationships || data.relationships || [];\nconst summary = data.output?.summary || data.summary || '';\nconst title = data.output?.title || data.title || '';\nconst category = data.output?.category || data.category || '';\nconst tags = data.output?.tags || data.tags || [];\n\nlet score = 100;\nconst penalties = [];\n\nif (!title) { score -= 20; penalties.push('Missing title'); }\nif (!summary || summary.length < 50) { score -= 15; penalties.push('Summary too short'); }\nif (!category) { score -= 10; penalties.push('Missing category'); }\nif (tags.length === 0) { score -= 10; penalties.push('No tags'); }\nif (entities.length === 0) { score -= 15; penalties.push('No entities extracted'); }\nif (relationships.length === 0) { score -= 10; penalties.push('No relationships mapped'); }\nif (contradiction.has_contradictions) {\n  score -= 20;\n  penalties.push('Contradictions detected');\n}\n\nscore = Math.max(0, score);\n\nlet band = 'high';\nif (score < 50) band = 'low';\nelse if (score < 75) band = 'medium';\n\nconst citationChain = {\n  documentTitle: title,\n  category,\n  summary,\n  entityCount: entities.length,\n  relationshipCount: relationships.length,\n  extractedAt: new Date().toISOString(),\n  confidenceScore: score,\n  confidenceBand: band,\n  qualityPenalties: penalties\n};\n\nreturn [{ json: { ...data, confidenceScore: score, confidenceBand: band, citationChain, qualityPenalties: penalties } }];"
+      },
+      "id": "confidence-scorer-id",
+      "name": "Confidence Scorer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2896,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst metadata = {\n  title: data.output?.title || data.title || 'Unknown',\n  category: data.output?.category || data.category || 'Unknown',\n  source_file: data.source_file || 'Unknown',\n  confidence_score: data.confidenceScore || 0,\n  confidence_band: data.confidenceBand || 'unknown',\n  has_contradictions: data.hasContradictions || false,\n  entity_count: (data.output?.entities || data.entities || []).length,\n  relationship_count: (data.output?.relationships || data.relationships || []).length,\n  indexed_at: new Date().toISOString()\n};\n\nreturn [{ json: { ...data, documentMetadata: metadata } }];"
+      },
+      "id": "citation-metadata-id",
+      "name": "Build Citation Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "weekly-digest-trigger-id",
+      "name": "Weekly Digest Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nlet text = \"\";\ntry { text = input.choices[0].message.content; } catch(e) {}\n\nlet digest = {};\ntry {\n  const cleaned = text.replace(/\\`\\`\\`json\\\\n?|\\\\n?\\`\\`\\`/g, '').trim();\n  digest = JSON.parse(cleaned);\n} catch(e) {\n  digest = { weekly_summary: \"Unable to generate digest\", health_score: \"N/A\" };\n}\n\nconst msg = `?? *Weekly Knowledge Base Digest*\\n\\n` +\n  `?? Health Score: *${digest.health_score || 'N/A'}/10*\\n` +\n  `?? Total Documents: ${digest.total_documents || 0}\\n` +\n  `?? Categories: ${(digest.categories_covered || []).join(', ')}\\n\\n` +\n  `?? Strongest Areas:\\n${(digest.strongest_areas || []).map(a => `. ${a}`).join('\\n')}\\n\\n` +\n  `?? Knowledge Gaps:\\n${(digest.knowledge_gaps || []).map(g => `. ${g}`).join('\\n')}\\n\\n` +\n  `?? Recommended Additions:\\n${(digest.recommended_additions || []).map(r => `. ${r}`).join('\\n')}\\n\\n` +\n  `?? Summary: ${digest.weekly_summary || ''}`;\n\nreturn [{ json: { digest, telegramMsg: msg } }];"
+      },
+      "id": "parse-weekly-digest-id",
+      "name": "Parse Weekly Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.telegramMsg }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "send-weekly-digest-id",
+      "name": "Send Weekly Digest",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2896,
+        -304
+      ],
+      "webhookId": "acf47c79-d861-49a3-9589-98cc971f4801",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Telegram account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst data = item.json;\nconst fileName = data.name || data.fileName || '';\nconst ext = fileName.split('.').pop().toLowerCase();\n\nconst fileTypeMap = {\n  'pdf': 'pdf',\n  'docx': 'docx',\n  'doc': 'docx',\n  'txt': 'text',\n  'md': 'text',\n  'png': 'image',\n  'jpg': 'image',\n  'jpeg': 'image',\n  'mp3': 'audio',\n  'mp4': 'audio',\n  'm4a': 'audio',\n  'wav': 'audio'\n};\n\nconst fileType = fileTypeMap[ext] || 'unknown';\nconst supportedTypes = ['pdf', 'docx', 'text', 'image', 'audio'];\nconst isSupported = supportedTypes.includes(fileType);\n\nreturn [{ \n  json: { \n    ...data,\n    detectedFileType: fileType,\n    fileExtension: ext,\n    fileName: fileName,\n    isSupported,\n    processingNote: isSupported \n      ? `Processing ${ext.toUpperCase()} file via ${fileType} pipeline` \n      : `Unsupported file type: ${ext}`\n  },\n  binary: item.binary\n}];"
+      },
+      "id": "file-type-detector-id",
+      "name": "Detect File Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o-mini\", max_tokens: 800, messages: [{ role: \"system\", content: \"You are a knowledge base integrity checker. Return only valid JSON, no markdown.\" }, { role: \"user\", content: \"New document title: \" + ($('Categorizer Agent').item.json.output?.title || 'Unknown') + \". Summary: \" + ($('Categorizer Agent').item.json.output?.summary || 'Unknown') + \". The KB has \" + $('Fetch KB Index').all().length + \" existing documents. Return JSON: {\\\"has_contradictions\\\": false, \\\"contradictions\\\": [], \\\"safe_to_add\\\": true, \\\"recommendation\\\": \\\"safe to add\\\"}\" }] }) }}",
+        "options": {}
+      },
+      "id": "detector-http-id-unique",
+      "name": "Contradiction Detector",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2448,
+        -112
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "knowledge_index",
+        "limit": 20
+      },
+      "id": "fetch-kb-index-decay-id",
+      "name": "Fetch KB Index (Decay)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        272,
+        512
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const kbItems = $('Fetch KB Index').all().map(i => ({\n  title: i.json.title,\n  category: i.json.category,\n  summary: i.json.summary,\n  confidence: i.json.confidence_score,\n  added_at: i.json.added_at\n}));\n\nconst prompt = \"Analyze this knowledge base and generate a weekly digest. Knowledge base contents: \" + JSON.stringify(kbItems) + \". Return JSON: { \\\"total_documents\\\": 0, \\\"categories_covered\\\": [], \\\"strongest_areas\\\": [], \\\"knowledge_gaps\\\": [], \\\"low_confidence_docs\\\": [], \\\"recommended_additions\\\": [], \\\"weekly_summary\\\": \\\"3 sentence executive summary\\\", \\\"health_score\\\": \\\"1-10\\\" }\";\n\nreturn [{ json: { digestPrompt: prompt } }];"
+      },
+      "id": "build-digest-prompt-id",
+      "name": "Build Digest Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o-mini\", max_tokens: 1500, messages: [{ role: \"system\", content: \"You are a knowledge base intelligence analyst. Return only valid JSON, no markdown.\" }, { role: \"user\", content: $json.digestPrompt }] }) }}",
+        "options": {}
+      },
+      "id": "weekly-intelligence-http-id",
+      "name": "Weekly Intelligence Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2448,
+        -304
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "New Doc Detected": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "?? Detect File Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Text": {
+      "main": [
+        [
+          {
+            "node": "Categorizer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorizer Agent": {
+      "main": [
+        [
+          {
+            "node": "Relationship Mapper Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o Categorizer": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Categorizer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Categorizer Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o Mapper": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Relationship Mapper Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Graph Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Relationship Mapper Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Knowledge Index": {
+      "main": [
+        [
+          {
+            "node": "?? Contradiction Detector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Embed into Vector Brain",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch KB Index": {
+      "main": [
+        [
+          {
+            "node": "Gap Finder Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "?? Build Digest Prompt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save to Knowledge Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gap Finder Agent": {
+      "main": [
+        [
+          {
+            "node": "Build Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o Gap Finder": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gap Finder Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask the Knowledge Base": {
+      "main": [
+        [
+          {
+            "node": "Librarian Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o Librarian": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Librarian Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Vector Brain": {
+      "ai_tool": [
+        [
+          {
+            "node": "Librarian Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Embeddings Query": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Search Vector Brain",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Embed into Vector Brain",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Relationship Mapper Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Index Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Index Row": {
+      "main": [
+        [
+          {
+            "node": "Fetch KB Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Knowledge Graph": {
+      "ai_tool": [
+        [
+          {
+            "node": "Librarian Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Parse Contradiction Check": {
+      "main": [
+        [
+          {
+            "node": "?? Confidence Scorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "? Daily Decay Check": {
+      "main": [
+        [
+          {
+            "node": "Fetch KB Index (Decay)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Check Knowledge Age": {
+      "main": [
+        [
+          {
+            "node": "?? Send Decay Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Confidence Scorer": {
+      "main": [
+        [
+          {
+            "node": "?? Build Citation Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Build Citation Metadata": {
+      "main": [
+        [
+          {
+            "node": "Embed into Vector Brain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Weekly Digest Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch KB Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Parse Weekly Digest": {
+      "main": [
+        [
+          {
+            "node": "?? Send Weekly Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Detect File Type": {
+      "main": [
+        [
+          {
+            "node": "Extract Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Contradiction Detector": {
+      "main": [
+        [
+          {
+            "node": "?? Parse Contradiction Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch KB Index (Decay)": {
+      "main": [
+        [
+          {
+            "node": "?? Check Knowledge Age",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Build Digest Prompt": {
+      "main": [
+        [
+          {
+            "node": "?? Weekly Intelligence Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?? Weekly Intelligence Agent": {
+      "main": [
+        [
+          {
+            "node": "?? Parse Weekly Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "YOUR_VERSION_ID",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}
