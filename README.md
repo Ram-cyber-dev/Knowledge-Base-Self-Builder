@@ -135,4 +135,7 @@ The worked example throughout this build is **Café Bloom**, a fictional café i
 
 ---
 
-Built by [Ram](https://github.com/Ram-cyber-dev) 
+Built by Ram
+Founder, MissedCallRecovery.org — AI voice receptionist 
+platform for US plumbing and HVAC businesses
+Available for freelance AI automation projects
